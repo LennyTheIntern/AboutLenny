@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebGL Shader Example</title>
+  <title>WebGL Shader with Time-Based Color</title>
   <style>
     body {
       margin: 0;
@@ -27,8 +27,13 @@
 
     const fragmentShaderSource = `
       precision mediump float;
+      uniform float u_time;
       void main() {
-        gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0); // Cyan color
+        // Animate color using time
+        float red = 0.5 + 0.5 * sin(u_time);
+        float green = 0.5 + 0.5 * sin(u_time + 2.0);
+        float blue = 0.5 + 0.5 * sin(u_time + 4.0);
+        gl_FragColor = vec4(red, green, blue, 1.0); // Animated color
       }
     `;
 
@@ -103,10 +108,29 @@
       // Tell the position attribute how to get data out of the positionBuffer
       gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-      // Draw the scene
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      // Get the location of the time uniform
+      const timeLocation = gl.getUniformLocation(program, "u_time");
+
+      // Animation loop
+      let startTime = Date.now();
+      function render() {
+        // Calculate elapsed time in seconds
+        const elapsedTime = (Date.now() - startTime) / 1000.0;
+
+        // Send the time to the shader
+        gl.uniform1f(timeLocation, elapsedTime);
+
+        // Draw the scene
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        // Call render again for the next frame
+        requestAnimationFrame(render);
+      }
+
+      // Start the animation loop
+      render();
     }
 
     window.onload = main;
